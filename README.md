@@ -6,6 +6,15 @@ energy orbs, outrun hunter drones, and never touch the street.
 
 Everything (hero, city, effects, sound) is generated in code. No downloaded assets.
 
+## Download
+
+**[Download for Windows](https://github.com/NovodyInParticular/skyline-swinger/releases/download/v0.1.0/SkylineSwinger-Windows.zip)**: unzip, then double-click `SkylineSwinger.exe`.
+If Windows says "Windows protected your PC", click **More info**, then **Run anyway** (the game isn't code-signed).
+
+**[Download for Linux](https://github.com/NovodyInParticular/skyline-swinger/releases/download/v0.1.0/SkylineSwinger-Linux.tar.gz)**: extract, then run `./SkylineSwinger.x86_64`.
+
+The green **Code > Download ZIP** button only gives you the Godot project files, not the game.
+
 ## Controls
 
 | Input | Action |
