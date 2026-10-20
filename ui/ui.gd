@@ -10,6 +10,7 @@ signal title_requested
 const TEAL := Color(0.1, 0.82, 0.76)
 const ORANGE := Color(1.0, 0.52, 0.15)
 const SOFT := Color(0.8, 0.84, 0.9)
+const TOUCH_CONTROLS := "Left thumb  move        Drag right side  look        GRAPPLE  tap to fire, tap to let go\nJUMP  jump        IN / OUT  reel the rope        DASH  air dash        II  pause"
 const CONTROLS := "Mouse  look        Hold LMB  grapple        WASD  steer / pump / walk\nSpace  jump        Q / E  reel in / out        Shift  air dash\nEsc  pause        M  mute        R  restart after a fall"
 
 
@@ -137,7 +138,7 @@ func _build_title() -> void:
 	box.add_child(_button("Quit", func() -> void: get_tree().quit()))
 	_title_best = _label("", 18, ORANGE)
 	box.add_child(_title_best)
-	box.add_child(_label(CONTROLS, 14, SOFT))
+	box.add_child(_label(TOUCH_CONTROLS if Settings.touch_mode else CONTROLS, 14, SOFT))
 
 
 func _build_hud() -> void:
@@ -161,7 +162,10 @@ func _build_hud() -> void:
 	hint.offset_left = -320.0
 	hint.offset_right = -20.0
 	hint.offset_top = 18.0
+	hint.visible = not Settings.touch_mode
 	_hud.add_child(hint)
+	if Settings.touch_mode:
+		_hud.add_child(TouchControls.new())
 
 	_crosshair = Crosshair.new()
 	_crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -199,7 +203,7 @@ func _build_pause() -> void:
 	_pause = _screen(Color(0.0, 0.0, 0.03, 0.55))
 	var box := _panel(_pause)
 	box.add_child(_label("PAUSED", 44, TEAL))
-	_sensitivity = _slider_row(box, "Mouse sensitivity", 0.03, 1.0, 0.01)
+	_sensitivity = _slider_row(box, "Look sensitivity" if Settings.touch_mode else "Mouse sensitivity", 0.03, 1.0, 0.01)
 	_sensitivity.value_changed.connect(_on_sensitivity_changed)
 	_volume = _slider_row(box, "Volume", 0.0, 1.0, 0.01)
 	_volume.value_changed.connect(_on_volume_changed)

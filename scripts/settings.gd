@@ -11,6 +11,8 @@ var high_score := 0
 var skip_title := false
 ## Off during the automated test run so it never touches the real save file.
 var persist := true
+## Phones get on-screen controls; `-- --touch` forces them on desktop for testing.
+var touch_mode := OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--touch")
 
 
 func _ready() -> void:
@@ -34,7 +36,10 @@ func _setup_input() -> void:
 	_bind_key("mute", KEY_M)
 	_bind_key("pause", KEY_ESCAPE)
 	_bind_key("restart", KEY_R)
-	_bind_mouse("grapple", MOUSE_BUTTON_LEFT)
+	if touch_mode:
+		InputMap.add_action("grapple")   # driven by TouchControls; taps also arrive as emulated clicks
+	else:
+		_bind_mouse("grapple", MOUSE_BUTTON_LEFT)
 
 
 func _bind_key(action: StringName, key: Key) -> void:

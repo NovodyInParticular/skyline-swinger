@@ -8,10 +8,13 @@ Everything (hero, city, effects, sound) is generated in code. No downloaded asse
 
 ## Download
 
-**[Download for Windows](https://github.com/NovodyInParticular/skyline-swinger/releases/download/v0.1.0/SkylineSwinger-Windows.zip)**: unzip, then double-click `SkylineSwinger.exe`.
+**[Download for Windows](https://github.com/NovodyInParticular/skyline-swinger/releases/download/v0.2.0/SkylineSwinger-Windows.zip)**: unzip, then double-click `SkylineSwinger.exe`.
 If Windows says "Windows protected your PC", click **More info**, then **Run anyway** (the game isn't code-signed).
 
-**[Download for Linux](https://github.com/NovodyInParticular/skyline-swinger/releases/download/v0.1.0/SkylineSwinger-Linux.tar.gz)**: extract, then run `./SkylineSwinger.x86_64`.
+**[Download for Linux](https://github.com/NovodyInParticular/skyline-swinger/releases/download/v0.2.0/SkylineSwinger-Linux.tar.gz)**: extract, then run `./SkylineSwinger.x86_64`.
+
+**[Download for Android](https://github.com/NovodyInParticular/skyline-swinger/releases/download/v0.2.0/SkylineSwinger.apk)**: open the APK on your phone
+and allow installs from your browser or file manager when Android asks. Needs a 64-bit (arm64) phone.
 
 The green **Code > Download ZIP** button only gives you the Godot project files, not the game.
 
@@ -28,6 +31,17 @@ The green **Code > Download ZIP** button only gives you the Godot project files,
 | Esc | Pause menu (mouse sensitivity, volume, mute) |
 | M | Mute / unmute |
 | R | Restart after a run ends |
+
+### On a phone
+
+| Touch | Action |
+|---|---|
+| Left thumb anywhere | Move stick (appears where you touch) |
+| Drag on the right half | Look |
+| GRAPPLE | Tap to fire at the crosshair, tap again to let go |
+| JUMP / DASH | Jump / air dash |
+| IN / OUT | Hold to reel the line in / out |
+| II or the back button | Pause menu (look sensitivity, volume, mute) |
 
 The crosshair turns orange when the grapple would hit something.
 
@@ -62,6 +76,9 @@ This produces:
 
 - `build/SkylineSwinger.exe`: Windows x86_64, single file with the game data embedded
 - `build/SkylineSwinger.x86_64`: Linux x86_64, single file
+- `build/SkylineSwinger.apk`: Android arm64, only when a release keystore exists in
+  `~/.local/share/godot/keystores/` (`skyline-release.keystore`, alias `skyline`, password in
+  `skyline-release.pass`). Needs the Android SDK and a Java SDK set in Godot's editor settings.
 
 No Wine is needed. The Windows preset leaves `application/modify_resources` off, so the
 `.exe` has Godot's default icon and version info.
@@ -71,6 +88,7 @@ No Wine is needed. The Windows preset leaves `application/modify_resources` off,
 ```sh
 godot --headless --quit-after 300   # load the title screen and quit
 godot --headless -- --autotest      # scripted run: walk, grapple, swing, reel, dash, orb, drone, pause, death
+godot --headless -- --autotest --touch   # same, plus fake finger input through the on-screen controls
 ```
 
 The autotest prints `[autotest] ...` lines and ends with `[autotest] OK`. It never writes the save file.

@@ -85,12 +85,32 @@ func _unhandled_input(event: InputEvent) -> void:
 		restart()
 	elif state == State.PLAYING and event is InputEventMouseButton and event.pressed \
 			and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED   # e.g. after alt-tabbing back in
+		_capture_mouse(true)   # e.g. after alt-tabbing back in
 
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and state == State.PLAYING and not _autotest:
 		pause_game()
+	elif what == NOTIFICATION_WM_GO_BACK_REQUEST:   # Android back button
+		match state:
+			State.PLAYING:
+				pause_game()
+			State.PAUSED:
+				resume_game()
+			State.GAME_OVER:
+				go_to_title()
+			State.TITLE:
+				get_tree().quit()
+
+
+func is_playing() -> bool:
+	return state == State.PLAYING
+
+
+## Phones have no pointer to capture, so touch mode leaves the mouse mode alone.
+func _capture_mouse(on: bool) -> void:
+	if not Settings.touch_mode:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if on else Input.MOUSE_MODE_VISIBLE
 
 
 func score() -> int:
@@ -116,14 +136,14 @@ func start_game() -> void:
 	rig.yaw = 0.0
 	rig.pitch = -0.15
 	ui.show_hud()
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	_capture_mouse(true)
 	Sfx.play("start")
 
 
 func pause_game() -> void:
 	state = State.PAUSED
 	get_tree().paused = true
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_capture_mouse(false)
 	ui.show_pause()
 
 
@@ -133,7 +153,7 @@ func resume_game() -> void:
 	state = State.PLAYING
 	get_tree().paused = false
 	ui.hide_pause()
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	_capture_mouse(true)
 
 
 func restart() -> void:
@@ -148,7 +168,7 @@ func go_to_title() -> void:
 
 func _reload() -> void:
 	get_tree().paused = false
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_capture_mouse(false)
 	get_tree().reload_current_scene()
 
 
@@ -175,7 +195,7 @@ func _on_player_died(reason: String) -> void:
 	var final_score := score()
 	var record := Settings.submit_score(final_score)
 	ui.show_game_over(final_score, maxi(Settings.high_score, final_score), record, reason)
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_capture_mouse(false)
 
 
 # --- Drones: more of them, faster and more often as the run goes on -----------------
@@ -244,6 +264,8 @@ func _run_autotest() -> void:
 	var report := func(msg: String) -> void: print("[autotest] ", msg)
 	await _wait(0.6)
 	report.call("spawned at %s, chunks=%d, on_floor=%s" % [player.global_position, city.chunk_count(), player.is_on_floor()])
+	if Settings.touch_mode:
+		await _touch_check(report)
 
 	_press("move_forward", 0.3)
 	await _wait(0.35)
@@ -312,6 +334,47 @@ func _run_autotest() -> void:
 	report.call("state=%s score=%d" % [State.keys()[state], score()])
 	print("[autotest] OK")
 	get_tree().quit()
+
+
+## Feeds fake finger events through TouchControls: stick, look drag, grapple tap.
+func _touch_check(report: Callable) -> void:
+	var area := get_viewport().get_visible_rect().size
+	_finger(0, Vector2(150.0, area.y - 150.0), true)
+	_finger(0, Vector2(150.0, area.y - 230.0), true, true)
+	await get_tree().process_frame
+	var forward := Input.get_action_strength("move_forward")
+	_finger(0, Vector2(150.0, area.y - 230.0), false)
+	var yaw_before := rig.yaw
+	_finger(1, Vector2(area.x * 0.6, area.y * 0.4), true)
+	_finger(1, Vector2(area.x * 0.6 + 80.0, area.y * 0.4), true, true)
+	_finger(1, Vector2(area.x * 0.6 + 80.0, area.y * 0.4), false)
+	_finger(2, area - Vector2(150.0, 150.0), true)
+	_finger(2, area - Vector2(150.0, 150.0), false)
+	var grapple_after_tap := Input.is_action_pressed("grapple")
+	await _wait(0.4)
+	report.call("touch: forward=%.2f released=%s look_turned=%s grapple_tap=%s grapple_held_after=%s" % [forward,
+			Input.get_action_strength("move_forward") == 0.0, not is_equal_approx(rig.yaw, yaw_before),
+			grapple_after_tap, Input.is_action_pressed("grapple")])
+	if Input.is_action_pressed("grapple"):   # latched onto something: tap again to let go
+		_finger(2, area - Vector2(150.0, 150.0), true)
+		_finger(2, area - Vector2(150.0, 150.0), false)
+
+
+func _finger(index: int, pos: Vector2, down: bool, drag := false) -> void:
+	var event: InputEvent
+	if drag:
+		var d := InputEventScreenDrag.new()
+		d.index = index
+		d.position = pos
+		d.relative = pos - Vector2(150.0, get_viewport().get_visible_rect().size.y - 150.0) if index == 0 else Vector2(80.0, 0.0)
+		event = d
+	else:
+		var t := InputEventScreenTouch.new()
+		t.index = index
+		t.position = pos
+		t.pressed = down
+		event = t
+	get_viewport().push_input(event.xformed_by(get_viewport().get_final_transform()))   # push_input wants window pixels
 
 
 func _press(action: String, seconds: float) -> void:

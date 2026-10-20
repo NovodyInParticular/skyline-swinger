@@ -41,9 +41,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var motion := event as InputEventMouseMotion
 	if motion:
-		var turn := deg_to_rad(Settings.mouse_sensitivity)
-		yaw -= motion.relative.x * turn
-		pitch = clampf(pitch - motion.relative.y * turn, PITCH_MIN, PITCH_MAX)
+		look(motion.relative)
+
+
+## Turns the camera by a mouse or touch drag, in screen pixels.
+func look(relative: Vector2) -> void:
+	var turn := deg_to_rad(Settings.mouse_sensitivity)
+	yaw -= relative.x * turn
+	pitch = clampf(pitch - relative.y * turn, PITCH_MIN, PITCH_MAX)
 
 
 func _process(delta: float) -> void:
